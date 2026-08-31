@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Analyzer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">◇</span>
+        <div>
+          <strong>Project Analyzer</strong>
+          <span>Local code insights</span>
+        </div>
+      </div>
+      <button id="open-project" class="primary-button">Open Project</button>
+    </header>
+
+    <aside class="sidebar">
+      <nav>
+        <button class="nav-item active" data-view="overview">Overview</button>
+        <button class="nav-item" data-view="files">Files</button>
+        <button class="nav-item" data-view="languages">Languages</button>
+        <button class="nav-item" data-view="structure">Structure</button>
+        <button class="nav-item" data-view="insights">Insights</button>
+      </nav>
+      <div class="sidebar-note">Read-only analysis. No project files are modified.</div>
+    </aside>
+
+    <main class="content">
+      <section id="empty-state" class="empty-state">
+        <div class="empty-icon">◇</div>
+        <h1>Inspect a project</h1>
+        <p>Select a local folder to generate a structural and language overview.</p>
+        <button id="empty-open-project" class="primary-button">Choose Folder</button>
+      </section>
+
+      <section id="loading-state" class="empty-state hidden">
+        <div class="spinner"></div>
+        <h2>Analyzing project…</h2>
+        <p>Scanning files, code markers and project statistics.</p>
+      </section>
+
+      <section id="error-state" class="empty-state hidden">
+        <div class="error-icon">!</div>
+        <h2>Analysis failed</h2>
+        <p id="error-message"></p>
+      </section>
+
+      <div id="dashboard" class="hidden">
+        <section class="view" data-view-panel="overview">
+          <div class="project-heading">
+            <div>
+              <p class="eyebrow">Current project</p>
+              <h1 id="project-name">—</h1>
+              <p id="project-path" class="path-text">—</p>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <article class="stat-card"><span>Files</span><strong id="stat-files">0</strong></article>
+            <article class="stat-card"><span>Folders</span><strong id="stat-folders">0</strong></article>
+            <article class="stat-card"><span>Lines</span><strong id="stat-lines">0</strong></article>
+            <article class="stat-card"><span>Size</span><strong id="stat-size">0 B</strong></article>
+          </div>
+
+          <div class="grid-two">
+            <article class="panel">
+              <div class="panel-title"><h2>Languages</h2><span>By lines</span></div>
+              <div id="overview-languages" class="bars"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-title"><h2>Highlights</h2></div>
+              <dl class="detail-list">
+                <div><dt>Largest file</dt><dd id="largest-file">—</dd></div>
+                <div><dt>Most common extension</dt><dd id="common-extension">—</dd></div>
+                <div><dt>Maximum depth</dt><dd id="max-depth">—</dd></div>
+                <div><dt>Average file size</dt><dd id="average-file-size">—</dd></div>
+                <div><dt>Code markers</dt><dd id="overview-markers">—</dd></div>
+              </dl>
+            </article>
+          </div>
+        </section>
+
+        <section class="view hidden" data-view-panel="files">
+          <div class="section-heading file-heading">
+            <div><p class="eyebrow">Project contents</p><h1>Files</h1></div>
+            <label class="search-box" for="file-search">
+              <span>⌕</span>
+              <input id="file-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search files or folders…">
+            </label>
+          </div>
+          <div class="search-meta" id="file-search-meta">Browse the project tree or search by name/path.</div>
+          <div class="grid-files">
+            <article class="panel tree-panel"><div id="file-tree" class="tree"></div></article>
+            <article class="panel file-inspector">
+              <p class="eyebrow">Selected file</p>
+              <h2 id="file-name">Select a file</h2>
+              <dl class="detail-list">
+                <div><dt>Language</dt><dd id="file-language">—</dd></div>
+                <div><dt>Size</dt><dd id="file-size">—</dd></div>
+                <div><dt>Lines</dt><dd id="file-lines">—</dd></div>
+                <div><dt>Path</dt><dd id="file-path">—</dd></div>
+              </dl>
+            </article>
+          </div>
+        </section>
+
+        <section class="view hidden" data-view-panel="languages">
+          <div class="section-heading"><div><p class="eyebrow">Source composition</p><h1>Languages</h1></div></div>
+          <div class="grid-two">
+            <article class="panel"><div class="panel-title"><h2>By lines</h2></div><div id="languages-by-lines" class="bars large-bars"></div></article>
+            <article class="panel"><div class="panel-title"><h2>By files</h2></div><div id="languages-by-files" class="bars large-bars"></div></article>
+          </div>
+        </section>
+
+        <section class="view hidden" data-view-panel="structure">
+          <div class="section-heading"><div><p class="eyebrow">Organization</p><h1>Structure</h1></div></div>
+          <div class="stat-grid">
+            <article class="stat-card"><span>Directories</span><strong id="structure-directories">0</strong></article>
+            <article class="stat-card"><span>Maximum depth</span><strong id="structure-depth">0</strong></article>
+            <article class="stat-card"><span>Empty directories</span><strong id="structure-empty">0</strong></article>
+            <article class="stat-card"><span>Average file</span><strong id="structure-average">0 B</strong></article>
+          </div>
+          <div class="grid-two">
+            <article class="panel">
+              <div class="panel-title"><h2>Files by extension</h2></div>
+              <div id="extensions-list" class="rank-list"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-title"><h2>Largest directories</h2></div>
+              <div id="directories-list" class="rank-list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view hidden" data-view-panel="insights">
+          <div class="section-heading"><div><p class="eyebrow">Project signals</p><h1>Insights</h1></div></div>
+
+          <div class="stat-grid">
+            <article class="stat-card insight-stat"><span>TODO</span><strong id="marker-todo">0</strong></article>
+            <article class="stat-card insight-stat"><span>FIXME</span><strong id="marker-fixme">0</strong></article>
+            <article class="stat-card insight-stat"><span>HACK</span><strong id="marker-hack">0</strong></article>
+            <article class="stat-card insight-stat"><span>Empty files</span><strong id="insight-empty-files">0</strong></article>
+          </div>
+
+          <div class="grid-two insights-grid">
+            <article class="panel">
+              <div class="panel-title">
+                <h2>Code markers</h2>
+                <span id="marker-summary">0 occurrences</span>
+              </div>
+              <div id="markers-list" class="marker-list"></div>
+            </article>
+
+            <div class="insight-column">
+              <article class="panel">
+                <div class="panel-title"><h2>Project signals</h2></div>
+                <dl class="detail-list">
+                  <div><dt>Large files</dt><dd id="insight-large-files">0</dd></div>
+                  <div><dt>Large-file threshold</dt><dd id="insight-large-threshold">—</dd></div>
+                  <div><dt>Without language classification</dt><dd id="insight-unclassified">0</dd></div>
+                  <div><dt>Extension variety</dt><dd id="insight-extension-variety">0</dd></div>
+                  <div><dt>Scanner warnings</dt><dd id="insight-warnings">0</dd></div>
+                </dl>
+              </article>
+
+              <article class="panel">
+                <div class="panel-title"><h2>Large files</h2></div>
+                <div id="large-files-list" class="rank-list"></div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-title"><h2>Empty files</h2></div>
+                <div id="empty-files-list" class="rank-list compact-rank-list"></div>
+              </article>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
