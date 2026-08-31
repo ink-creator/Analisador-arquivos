@@ -1,38 +1,128 @@
 # Project Analyzer
 
-Desktop project analyzer built with Python + HTML/CSS/JavaScript + pywebview.
+Desktop application for analyzing local code projects and displaying useful statistics about their files, structure, languages and organization.
 
-The application is intentionally read-only: it scans a selected folder, calculates project statistics and renders the result in a local desktop dashboard. It does **not** edit project files.
+[English](#english) · [Português](#português)
 
-## Current features
+---
 
-- native folder picker through pywebview;
-- maximized desktop window while keeping the normal title bar controls;
-- file and directory counting;
-- total byte size and average file size;
-- physical line counting for text files;
-- conservative binary-file detection;
-- language detection by extension / special filename;
-- language percentages by lines and by files;
-- extension frequency;
-- 10 largest files;
-- maximum directory depth;
-- empty-directory detection;
-- recursive largest-directory calculation;
-- nested project tree;
-- **live search/filter for files and folders** in the tree;
-- **Insights** page with empty files, large files, extension variety, unclassified files and scanner warnings;
-- **TODO / FIXME / HACK detection in source-code comments**, including file path, line number and a short snippet;
-- default ignored folders such as `node_modules`, `.git`, `.venv`, `dist`, and `build`;
-- warnings for filesystem entries that could not be read;
-- CLI mode for validating the analyzer without the GUI;
-- automated tests.
+## Preview
 
-## Structure
+| Overview | File Explorer |
+| --- | --- |
+| ![Project overview](assets/screenshots/overview.png) | ![Project files](assets/screenshots/files.png) |
+
+[▶ Watch the demo](assets/demo/project-analyzer-demo.mp4)
+
+---
+
+# English
+
+## About
+
+Project Analyzer is a read-only desktop tool built to inspect local programming projects without modifying their files.
+
+After selecting a folder, the application scans the project and presents its information in a desktop dashboard, including file counts, line totals, language distribution, project structure, largest files and code markers such as `TODO`, `FIXME` and `HACK`.
+
+The interface is built with HTML, CSS and JavaScript and runs as a native desktop window through `pywebview`, while Python handles the project analysis.
+
+---
+
+## Features
+
+- Native project folder selection
+- File and folder counting
+- Total project size and average file size
+- Physical line counting for readable text files
+- Language detection by extension and special filenames
+- Language percentages by lines and files
+- Extension frequency analysis
+- Interactive project tree
+- Search for files and folders
+- Largest-file detection
+- Largest-directory calculation
+- Maximum directory depth
+- Empty-directory detection
+- Detection of `TODO`, `FIXME` and `HACK` comments
+- Insights about empty, large and unclassified files
+- Ignored directories such as `.git`, `node_modules`, `.venv`, `dist` and `build`
+- Filesystem warning reporting
+- Command-line analysis mode
+- JSON output through the CLI
+- Automated tests
+- Read-only analysis: project files are never modified
+
+---
+
+## Technologies
+
+- Python
+- pywebview
+- HTML
+- CSS
+- JavaScript
+- Python standard library
+- unittest
+
+---
+
+## How to Run
+
+Clone the repository:
+
+```bash
+git clone https://github.com/ink-creator/Analisador-arquivos.git
+cd Analisador-arquivos
+```
+
+Create a virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+### Windows PowerShell
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python main.py
+```
+
+### Linux / macOS
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+python main.py
+```
+
+The desktop interface opens in a native `pywebview` window.
+
+---
+
+## CLI Mode
+
+The analyzer can also be used without the graphical interface:
+
+```bash
+python main.py --cli "C:\Projects\YourProject"
+```
+
+To return the complete result as JSON:
+
+```bash
+python main.py --cli "C:\Projects\YourProject" --json
+```
+
+The CLI analyzer uses only the Python standard library.
+
+---
+
+## Project Structure
 
 ```text
-analisador-projetos/
-├── main.py
+Analisador-arquivos/
 ├── backend/
 │   ├── __init__.py
 │   ├── analyzer.py
@@ -43,43 +133,118 @@ analisador-projetos/
 │   └── config.py
 ├── frontend/
 │   ├── index.html
-│   ├── css/style.css
-│   ├── js/app.js
-│   ├── js/charts.js
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── app.js
+│   │   └── charts.js
 │   └── assets/
 ├── tests/
 │   └── test_analyzer.py
-├── .gitignore
+├── main.py
+├── requirements.txt
 ├── LICENSE
-├── README.md
-└── requirements.txt
+└── README.md
 ```
 
-## Run the analyzer without the interface
+---
 
-From the project directory:
+## Tests
+
+Run the automated tests with:
 
 ```bash
-python main.py --cli "C:\\Projects\\YourProject"
+python -m unittest discover -s tests -v
 ```
 
-Full JSON output:
+---
+
+## How It Works
+
+```text
+Selected project folder
+        ↓
+     Python scanner
+        ↓
+ Analysis and statistics
+        ↓
+ JSON-serializable result
+        ↓
+      pywebview
+        ↓
+ HTML / CSS / JavaScript dashboard
+```
+
+The frontend only displays the analysis returned by Python. It does not modify the selected project.
+
+---
+
+# Português
+
+## Sobre
+
+Project Analyzer é uma ferramenta desktop de análise de projetos de programação criada para inspecionar pastas locais sem modificar nenhum arquivo.
+
+Depois que uma pasta é selecionada, o aplicativo analisa o projeto e apresenta as informações em um painel desktop, incluindo quantidade de arquivos, linhas de código, linguagens utilizadas, estrutura de pastas, maiores arquivos e marcadores como `TODO`, `FIXME` e `HACK`.
+
+A interface foi construída com HTML, CSS e JavaScript e é executada em uma janela nativa através do `pywebview`, enquanto o Python realiza toda a análise do projeto.
+
+---
+
+## Funcionalidades
+
+- Seleção nativa da pasta do projeto
+- Contagem de arquivos e pastas
+- Tamanho total do projeto e tamanho médio dos arquivos
+- Contagem de linhas em arquivos de texto legíveis
+- Detecção de linguagem por extensão e nomes especiais
+- Porcentagem das linguagens por linhas e arquivos
+- Frequência de extensões
+- Árvore interativa do projeto
+- Pesquisa por arquivos e pastas
+- Detecção dos maiores arquivos
+- Cálculo das maiores pastas
+- Profundidade máxima da estrutura
+- Detecção de pastas vazias
+- Detecção de comentários `TODO`, `FIXME` e `HACK`
+- Insights sobre arquivos vazios, grandes e não classificados
+- Pastas ignoradas por padrão, como `.git`, `node_modules`, `.venv`, `dist` e `build`
+- Avisos de erros de leitura do sistema de arquivos
+- Modo de análise pela linha de comando
+- Saída completa em JSON pela CLI
+- Testes automatizados
+- Análise somente leitura: nenhum arquivo do projeto é alterado
+
+---
+
+## Tecnologias
+
+- Python
+- pywebview
+- HTML
+- CSS
+- JavaScript
+- Biblioteca padrão do Python
+- unittest
+
+---
+
+## Como Executar
+
+Clone o repositório:
 
 ```bash
-python main.py --cli "C:\\Projects\\YourProject" --json
+git clone https://github.com/ink-creator/Analisador-arquivos.git
+cd Analisador-arquivos
 ```
 
-This mode only uses the Python standard library.
-
-## Run the desktop interface
-
-Create and activate a virtual environment, then install the dependency:
+Crie um ambiente virtual:
 
 ```bash
 python -m venv .venv
 ```
 
-Windows PowerShell:
+### Windows PowerShell
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
@@ -87,7 +252,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Linux/macOS:
+### Linux / macOS
 
 ```bash
 source .venv/bin/activate
@@ -95,77 +260,88 @@ pip install -r requirements.txt
 python main.py
 ```
 
-The app opens maximized by default but is **not** exclusive fullscreen, so minimize, maximize/restore and close controls remain available.
+A interface será aberta em uma janela desktop nativa usando `pywebview`.
 
-## Run tests
+---
+
+## Modo CLI
+
+Também é possível analisar um projeto sem abrir a interface:
+
+```bash
+python main.py --cli "C:\Projetos\MeuProjeto"
+```
+
+Para receber o resultado completo em JSON:
+
+```bash
+python main.py --cli "C:\Projetos\MeuProjeto" --json
+```
+
+O analisador em modo CLI utiliza apenas a biblioteca padrão do Python.
+
+---
+
+## Estrutura do Projeto
+
+```text
+Analisador-arquivos/
+├── backend/
+│   ├── __init__.py
+│   ├── analyzer.py
+│   ├── scanner.py
+│   ├── languages.py
+│   ├── statistics.py
+│   ├── content.py
+│   └── config.py
+├── frontend/
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── app.js
+│   │   └── charts.js
+│   └── assets/
+├── tests/
+│   └── test_analyzer.py
+├── main.py
+├── requirements.txt
+├── LICENSE
+└── README.md
+```
+
+---
+
+## Testes
+
+Execute os testes automatizados com:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-## Result contract
+---
 
-The backend returns a JSON-serializable dictionary with these top-level keys:
+## Funcionamento
 
 ```text
-project
-summary
-languages
-extensions
-largest_files
-structure
-markers
-insights
-tree
-ignored
-warnings
+Pasta selecionada
+        ↓
+ Scanner em Python
+        ↓
+Análise e estatísticas
+        ↓
+ Resultado serializável
+        ↓
+      pywebview
+        ↓
+Interface HTML / CSS / JavaScript
 ```
 
-The frontend only renders this result; it contains no project-analysis logic.
+A interface apenas exibe os dados retornados pelo Python. Os arquivos do projeto não são modificados.
 
-### `markers`
+---
 
-Contains exact totals for source comment markers and a display list with path, line and snippet:
+## License
 
-```json
-{
-  "counts": {"TODO": 3, "FIXME": 1, "HACK": 0},
-  "total": 4,
-  "files": 2,
-  "items": []
-}
-```
-
-Marker detection uses Python's tokenizer for Python comments and lightweight language-aware comment rules for supported source formats. This intentionally avoids treating ordinary documentation and most string literals as code markers.
-
-### `insights`
-
-Contains small project-health/organization signals such as:
-
-- empty files;
-- files at or above 512 KiB;
-- files without a language classification;
-- number of distinct extensions;
-- filesystem scanner warnings.
-
-## Design decisions
-
-Language percentages use recognized source languages. `percent_by_lines` is based on readable physical lines and `percent_by_files` is based on recognized-language files. Binary files still count toward file count and total size, but not toward line totals.
-
-Symlinked directories and files are skipped to avoid loops and accidentally scanning outside the selected project.
-
-The file-tree search is performed entirely in JavaScript over the already returned tree, so searching does not re-scan the filesystem.
-
-## Good next steps
-
-1. Add a settings screen for ignored directories and custom exclusions.
-2. Add JSON and Markdown report export.
-3. Add progress/cancellation for very large repositories.
-4. Add duplicate-file detection by hash.
-5. Add an "Open in Explorer" action for selected files/folders.
-6. Package the app with PyInstaller once the product behavior is stable.
-
-## v1.2.1 startup fix
-
-The desktop bridge exposes only the callable functions needed by JavaScript via `window.expose`.
-It deliberately does not pass the native pywebview `Window` object through `js_api`, avoiding recursive serialization / `maximum recursion depth exceeded` errors on Windows/WebView2.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
