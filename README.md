@@ -12,7 +12,9 @@ Desktop application for analyzing local code projects and displaying useful stat
 | --- | --- |
 | ![Project overview](assets/screenshots/overview.png) | ![Project files](assets/screenshots/files.png) |
 
-[▶ Watch the demo](assets/demo/project-analyzer-demo.mp4)
+[▶ Watch the demo]
+
+https://github.com/user-attachments/assets/9f56805e-f1de-4b95-b013-83c853d1aaff
 
 ---
 
