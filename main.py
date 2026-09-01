@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 from typing import Any
@@ -9,16 +10,64 @@ from typing import Any
 from backend import ProjectAnalyzer
 
 
+def _settings_file() -> Path:
+    """Return a writable per-user settings file that also works in a PyInstaller .exe."""
+    if sys.platform == "win32":
+        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    else:
+        base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    return base / "ProjectAnalyzer" / "settings.json"
+
+
+def _load_language() -> str:
+    path = _settings_file()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        language = data.get("language", "en")
+        return language if language in {"pt", "en"} else "en"
+    except (OSError, json.JSONDecodeError, TypeError, AttributeError):
+        return "en"
+
+
+def _save_language(language: str) -> None:
+    path = _settings_file()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"language": language}, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+
 class DesktopApi:
     """Small, serialization-safe API exposed to JavaScript.
 
-    pywebview recursively inspects public attributes on ``js_api`` objects.  Keep
-    backend state private and never retain the native Window instance here; the
-    latter contains circular/native object graphs that must not be serialized.
+    pywebview recursively inspects public attributes on ``js_api`` objects. Keep
+    backend state private and never retain the native Window instance here.
     """
 
     def __init__(self) -> None:
         self._analyzer = ProjectAnalyzer()
+
+    def get_settings(self) -> dict[str, Any]:
+        """Return persisted UI settings."""
+        return {
+            "ok": True,
+            "language": _load_language(),
+            "settings_path": str(_settings_file()),
+        }
+
+    def set_language(self, language: str) -> dict[str, Any]:
+        """Persist the selected interface language."""
+        if language not in {"pt", "en"}:
+            return {"ok": False, "error": "Unsupported language."}
+
+        try:
+            _save_language(language)
+            return {"ok": True, "language": language}
+        except OSError as exc:
+            return {"ok": False, "error": str(exc)}
 
     def select_project(self) -> dict[str, Any]:
         """Open a native folder picker and immediately analyze the selected folder."""
@@ -39,7 +88,7 @@ class DesktopApi:
         try:
             data = self._analyzer.analyze(path)
             return {"ok": True, "data": data}
-        except Exception as exc:  # Boundary between Python and UI: return a serializable error.
+        except Exception as exc:
             return {"ok": False, "error": str(exc)}
 
 
@@ -112,9 +161,12 @@ def run_gui(debug: bool = False) -> int:
         background_color="#0b0f17",
         text_select=True,
     )
-    # Expose only the two bridge functions. This avoids recursive inspection of
-    # the API object's internal state and, crucially, of pywebview's native Window.
-    window.expose(api.select_project, api.analyze_path)
+    window.expose(
+        api.select_project,
+        api.analyze_path,
+        api.get_settings,
+        api.set_language,
+    )
     webview.start(debug=debug)
     return 0
 

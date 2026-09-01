@@ -1,10 +1,10 @@
 window.ProjectCharts = (() => {
-  function renderBars(container, rows, emptyText = "No data available") {
+  function renderBars(container, rows, emptyText = null) {
     container.replaceChildren();
     if (!rows.length) {
       const empty = document.createElement("div");
       empty.className = "empty-inline";
-      empty.textContent = emptyText;
+      empty.textContent = emptyText || window.ProjectI18n?.t("noDataAvailable") || "No data available";
       container.appendChild(empty);
       return;
     }

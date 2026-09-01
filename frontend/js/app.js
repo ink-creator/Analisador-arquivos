@@ -1,11 +1,22 @@
 (() => {
-  const state = { project: null, currentView: "overview", fileSearch: "" };
+  const state = {
+    project: null,
+    currentView: "overview",
+    fileSearch: "",
+    language: "en",
+  };
 
   const byId = (id) => document.getElementById(id);
+  const t = (key, variables = {}) => window.ProjectI18n.t(key, variables);
   const openButtons = [byId("open-project"), byId("empty-open-project")];
+  const settingsOverlay = byId("settings-overlay");
+
+  function locale() {
+    return state.language === "pt" ? "pt-BR" : "en-US";
+  }
 
   function formatNumber(value) {
-    return new Intl.NumberFormat().format(value ?? 0);
+    return new Intl.NumberFormat(locale()).format(value ?? 0);
   }
 
   function formatBytes(bytes) {
@@ -14,8 +25,16 @@
     const units = ["KB", "MB", "GB", "TB"];
     let size = value;
     let unit = -1;
-    do { size /= 1024; unit += 1; } while (size >= 1024 && unit < units.length - 1);
-    return `${size >= 10 ? size.toFixed(1) : size.toFixed(2)} ${units[unit]}`;
+    do {
+      size /= 1024;
+      unit += 1;
+    } while (size >= 1024 && unit < units.length - 1);
+
+    const digits = size >= 10 ? 1 : 2;
+    return `${new Intl.NumberFormat(locale(), {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(size)} ${units[unit]}`;
   }
 
   function setScreen(screen) {
@@ -24,7 +43,71 @@
   }
 
   function setButtonsDisabled(disabled) {
-    openButtons.forEach((button) => { button.disabled = disabled; });
+    openButtons.forEach((button) => {
+      button.disabled = disabled;
+    });
+  }
+
+  function updateLanguageSelection() {
+    document.querySelectorAll(".language-option").forEach((button) => {
+      const selected = button.dataset.language === state.language;
+      button.classList.toggle("selected", selected);
+      button.setAttribute("aria-checked", selected ? "true" : "false");
+    });
+  }
+
+  function applyLanguage(language) {
+    state.language = window.ProjectI18n.setLanguage(language);
+    updateLanguageSelection();
+
+    if (state.project) {
+      renderProject(state.project);
+      showView(state.currentView);
+    } else {
+      byId("file-search-meta").textContent = t("browseTree");
+      clearFileInspector();
+    }
+  }
+
+  async function loadPersistedLanguage() {
+    if (!window.pywebview?.api?.get_settings) {
+      applyLanguage("en");
+      return;
+    }
+
+    try {
+      const settings = await window.pywebview.api.get_settings();
+      applyLanguage(settings?.language || "en");
+    } catch {
+      applyLanguage("en");
+    }
+  }
+
+  async function chooseLanguage(language) {
+    const previous = state.language;
+    applyLanguage(language);
+
+    try {
+      if (!window.pywebview?.api?.set_language) throw new Error(t("bridgeUnavailable"));
+      const response = await window.pywebview.api.set_language(language);
+      if (!response?.ok) throw new Error(response?.error || t("settingsSaveFailed"));
+    } catch (error) {
+      applyLanguage(previous);
+      byId("error-message").textContent = error?.message || t("settingsSaveFailed");
+      closeSettings();
+      setScreen("error-state");
+    }
+  }
+
+  function openSettings() {
+    settingsOverlay.classList.remove("hidden");
+    updateLanguageSelection();
+    byId("settings-close").focus();
+  }
+
+  function closeSettings() {
+    settingsOverlay.classList.add("hidden");
+    byId("settings-button").focus();
   }
 
   async function openProject() {
@@ -32,14 +115,14 @@
     setScreen("loading-state");
     try {
       if (!window.pywebview?.api?.select_project) {
-        throw new Error("The Python bridge is unavailable. Start the app with 'python main.py'.");
+        throw new Error(t("bridgeUnavailable"));
       }
       const response = await window.pywebview.api.select_project();
       if (response.cancelled) {
         setScreen(state.project ? "dashboard" : "empty-state");
         return;
       }
-      if (!response.ok) throw new Error(response.error || "Unknown analysis error.");
+      if (!response.ok) throw new Error(response.error || t("unknownAnalysisError"));
       state.project = response.data;
       state.fileSearch = "";
       byId("file-search").value = "";
@@ -84,11 +167,18 @@
 
     const largest = data.largest_files?.[0];
     byId("largest-file").textContent = largest ? `${largest.path} · ${formatBytes(largest.size)}` : "—";
+
     const firstExtension = Object.entries(data.extensions || {})[0];
-    byId("common-extension").textContent = firstExtension ? `${firstExtension[0]} · ${formatNumber(firstExtension[1])} files` : "—";
+    byId("common-extension").textContent = firstExtension
+      ? `${firstExtension[0]} · ${t("filesCount", { count: formatNumber(firstExtension[1]) })}`
+      : "—";
+
     byId("max-depth").textContent = formatNumber(data.structure.maximum_depth);
     byId("average-file-size").textContent = formatBytes(summary.average_file_size);
-    byId("overview-markers").textContent = `${formatNumber(markers.total)} across ${formatNumber(markers.files)} files`;
+    byId("overview-markers").textContent = t("markersAcrossFiles", {
+      markers: formatNumber(markers.total),
+      files: formatNumber(markers.files),
+    });
 
     byId("structure-directories").textContent = formatNumber(summary.directories);
     byId("structure-depth").textContent = formatNumber(data.structure.maximum_depth);
@@ -98,15 +188,19 @@
     renderRankList(
       byId("extensions-list"),
       Object.entries(data.extensions || {})
-        .map(([name, count]) => ({ name, value: `${formatNumber(count)} files` }))
+        .map(([name, count]) => ({ name, value: t("filesCount", { count: formatNumber(count) }) }))
         .slice(0, 15),
     );
+
     renderRankList(
       byId("directories-list"),
-      (data.structure.largest_directories || []).map((item) => ({ name: item.path, value: formatBytes(item.size) })),
+      (data.structure.largest_directories || []).map((item) => ({
+        name: item.path,
+        value: formatBytes(item.size),
+      })),
     );
 
-    renderTree(data.tree || [], "");
+    renderTree(data.tree || [], state.fileSearch);
     clearFileInspector();
     renderInsights(markers, insights);
   }
@@ -115,7 +209,10 @@
     byId("marker-todo").textContent = formatNumber(markers.counts?.TODO || 0);
     byId("marker-fixme").textContent = formatNumber(markers.counts?.FIXME || 0);
     byId("marker-hack").textContent = formatNumber(markers.counts?.HACK || 0);
-    byId("marker-summary").textContent = `${formatNumber(markers.total || 0)} occurrences in ${formatNumber(markers.files || 0)} files`;
+    byId("marker-summary").textContent = t("occurrencesInFiles", {
+      occurrences: formatNumber(markers.total || 0),
+      files: formatNumber(markers.files || 0),
+    });
 
     const emptyFiles = insights.empty_files || { count: 0, paths: [] };
     const largeFiles = insights.large_files || { count: 0, threshold: 0, items: [] };
@@ -129,10 +226,15 @@
     byId("insight-warnings").textContent = formatNumber(insights.warnings || 0);
 
     renderMarkers(markers.items || [], markers.truncated);
+
     renderRankList(
       byId("large-files-list"),
-      (largeFiles.items || []).map((item) => ({ name: item.path, value: formatBytes(item.size) })),
+      (largeFiles.items || []).map((item) => ({
+        name: item.path,
+        value: formatBytes(item.size),
+      })),
     );
+
     renderRankList(
       byId("empty-files-list"),
       (emptyFiles.paths || []).map((path) => ({ name: path, value: "0 B" })),
@@ -146,7 +248,7 @@
     if (!items.length) {
       const empty = document.createElement("div");
       empty.className = "empty-inline marker-empty";
-      empty.textContent = "No TODO, FIXME or HACK markers found.";
+      empty.textContent = t("noMarkers");
       container.appendChild(empty);
       return;
     }
@@ -179,7 +281,7 @@
     if (truncated) {
       const note = document.createElement("div");
       note.className = "marker-truncated";
-      note.textContent = "The list is capped for display; totals above still include every detected marker.";
+      note.textContent = t("markerListCapped");
       container.appendChild(note);
     }
   }
@@ -189,20 +291,24 @@
     if (!items.length) {
       const empty = document.createElement("div");
       empty.className = "empty-inline";
-      empty.textContent = "No data available";
+      empty.textContent = t("noDataAvailable");
       container.appendChild(empty);
       return;
     }
+
     items.forEach((item) => {
       const row = document.createElement("div");
       row.className = "rank-item";
+
       const name = document.createElement("span");
       name.className = "rank-name";
       name.textContent = item.name;
       name.title = item.name;
+
       const value = document.createElement("span");
       value.className = "rank-value";
       value.textContent = item.value;
+
       row.append(name, value);
       container.appendChild(row);
     });
@@ -213,7 +319,10 @@
     const normalized = query.toLowerCase();
 
     return nodes.reduce((results, node) => {
-      const selfMatches = node.name.toLowerCase().includes(normalized) || node.path.toLowerCase().includes(normalized);
+      const selfMatches =
+        node.name.toLowerCase().includes(normalized) ||
+        node.path.toLowerCase().includes(normalized);
+
       if (node.type === "file") {
         if (selfMatches) results.push(node);
         return results;
@@ -241,30 +350,35 @@
     const container = byId("file-tree");
     container.replaceChildren();
 
-    const filtered = filterTree(nodes, query.trim());
+    const trimmed = query.trim();
+    const filtered = filterTree(nodes, trimmed);
+
     if (!filtered.length) {
       const empty = document.createElement("div");
       empty.className = "tree-empty";
-      empty.textContent = `No files or folders match “${query}”.`;
+      empty.textContent = t("noMatches", { query });
       container.appendChild(empty);
-      byId("file-search-meta").textContent = "0 matching files";
+      byId("file-search-meta").textContent = t("zeroMatchingFiles");
       return;
     }
 
     const fragment = document.createDocumentFragment();
-    filtered.forEach((node) => fragment.appendChild(createTreeNode(node, Boolean(query.trim()))));
+    filtered.forEach((node) => fragment.appendChild(createTreeNode(node, Boolean(trimmed))));
     container.appendChild(fragment);
 
-    if (query.trim()) {
-      byId("file-search-meta").textContent = `${formatNumber(countVisibleFiles(filtered))} matching files · matching folders are expanded automatically`;
+    if (trimmed) {
+      byId("file-search-meta").textContent = t("matchingFiles", {
+        count: formatNumber(countVisibleFiles(filtered)),
+      });
     } else {
-      byId("file-search-meta").textContent = "Browse the project tree or search by name/path.";
+      byId("file-search-meta").textContent = t("browseTree");
     }
   }
 
   function createTreeNode(node, expandDirectories = false) {
     const wrapper = document.createElement("div");
     wrapper.className = "tree-node";
+
     const row = document.createElement("button");
     row.className = "tree-row";
     row.type = "button";
@@ -272,54 +386,75 @@
     const icon = document.createElement("span");
     icon.className = "tree-icon";
     icon.textContent = node.type === "directory" ? (expandDirectories ? "▾" : "▸") : "·";
+
     const name = document.createElement("span");
     name.textContent = node.name;
+
     row.append(icon, name);
     wrapper.appendChild(row);
 
     if (node.type === "directory") {
       const children = document.createElement("div");
       children.className = `tree-children${expandDirectories ? "" : " hidden"}`;
-      (node.children || []).forEach((child) => children.appendChild(createTreeNode(child, expandDirectories)));
+      (node.children || []).forEach((child) => {
+        children.appendChild(createTreeNode(child, expandDirectories));
+      });
+
       row.addEventListener("click", () => {
         const collapsed = children.classList.toggle("hidden");
         icon.textContent = collapsed ? "▸" : "▾";
       });
+
       wrapper.appendChild(children);
     } else {
       row.addEventListener("click", () => {
-        document.querySelectorAll(".tree-row.selected").forEach((element) => element.classList.remove("selected"));
+        document.querySelectorAll(".tree-row.selected").forEach((element) => {
+          element.classList.remove("selected");
+        });
         row.classList.add("selected");
         inspectFile(node);
       });
     }
+
     return wrapper;
   }
 
   function inspectFile(file) {
     byId("file-name").textContent = file.name;
-    byId("file-language").textContent = file.language || "Unknown";
+    byId("file-language").textContent = file.language || t("unknown");
     byId("file-size").textContent = formatBytes(file.size);
-    byId("file-lines").textContent = file.lines == null ? "Binary / unavailable" : formatNumber(file.lines);
+    byId("file-lines").textContent = file.lines == null ? t("binaryUnavailable") : formatNumber(file.lines);
     byId("file-path").textContent = file.path;
   }
 
   function clearFileInspector() {
-    byId("file-name").textContent = "Select a file";
-    ["file-language", "file-size", "file-lines", "file-path"].forEach((id) => { byId(id).textContent = "—"; });
+    byId("file-name").textContent = t("selectFile");
+    ["file-language", "file-size", "file-lines", "file-path"].forEach((id) => {
+      byId(id).textContent = "—";
+    });
   }
 
   function showView(viewName) {
     state.currentView = viewName;
-    document.querySelectorAll("[data-view-panel]").forEach((panel) => panel.classList.toggle("hidden", panel.dataset.viewPanel !== viewName));
-    document.querySelectorAll(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
+
+    document.querySelectorAll("[data-view-panel]").forEach((panel) => {
+      panel.classList.toggle("hidden", panel.dataset.viewPanel !== viewName);
+    });
+
+    document.querySelectorAll(".nav-item").forEach((button) => {
+      button.classList.toggle("active", button.dataset.view === viewName);
+    });
+
     if (viewName === "files") byId("file-search").focus();
   }
 
   openButtons.forEach((button) => button.addEventListener("click", openProject));
-  document.querySelectorAll(".nav-item").forEach((button) => button.addEventListener("click", () => {
-    if (state.project) showView(button.dataset.view);
-  }));
+
+  document.querySelectorAll(".nav-item").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (state.project) showView(button.dataset.view);
+    });
+  });
 
   byId("file-search").addEventListener("input", (event) => {
     state.fileSearch = event.target.value;
@@ -333,4 +468,33 @@
       renderTree(state.project?.tree || [], "");
     }
   });
+
+  byId("settings-button").addEventListener("click", openSettings);
+  byId("settings-close").addEventListener("click", closeSettings);
+
+  settingsOverlay.addEventListener("click", (event) => {
+    if (event.target === settingsOverlay) closeSettings();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !settingsOverlay.classList.contains("hidden")) {
+      closeSettings();
+    }
+  });
+
+  document.querySelectorAll(".language-option").forEach((button) => {
+    button.addEventListener("click", () => chooseLanguage(button.dataset.language));
+  });
+
+  window.ProjectI18n.setLanguage("en");
+  updateLanguageSelection();
+
+  // pywebview dispatches `pywebviewready` on window, not on document.
+  // If the bridge is already available (for example after a fast reload),
+  // load the persisted settings immediately; otherwise wait for the event.
+  if (window.pywebview?.api?.get_settings) {
+    loadPersistedLanguage();
+  } else {
+    window.addEventListener("pywebviewready", loadPersistedLanguage, { once: true });
+  }
 })();
