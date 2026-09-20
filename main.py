@@ -133,27 +133,6 @@ def run_cli(path: str, pretty: bool = True) -> int:
             f"FIXME: {counts.get('FIXME', 0)} | "
             f"HACK: {counts.get('HACK', 0)}"
         )
-
-        code = result.get("code_analysis", {})
-        code_summary = code.get("summary", {})
-        dependencies = code.get("dependencies", {})
-        print()
-        print("Python code:")
-        print(
-            f"  {code_summary.get('functions', 0)} functions | "
-            f"{code_summary.get('classes', 0)} classes | "
-            f"average complexity {code_summary.get('average_complexity', 0):.2f}"
-        )
-        most_complex = code_summary.get("most_complex_function")
-        if most_complex:
-            print(
-                f"  Most complex: {most_complex['path']}:{most_complex['line']} "
-                f"{most_complex['qualified_name']} ({most_complex['complexity']})"
-            )
-        print(
-            f"  {len(dependencies.get('edges', []))} local dependencies | "
-            f"{dependencies.get('circular_dependencies', 0)} circular groups"
-        )
     else:
         print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0

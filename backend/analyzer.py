@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Any
 
-from .code_analysis import analyze_python_code
 from .config import DEFAULT_IGNORED_DIRECTORIES, DEFAULT_IGNORED_FILES
 from .scanner import ProjectScanner
 from .statistics import calculate_statistics
@@ -32,7 +31,6 @@ class ProjectAnalyzer:
                 "path": str(scan.root),
             },
             **statistics,
-            "code_analysis": analyze_python_code(scan),
             "ignored": {
                 "directories": sorted(self.ignored_directories),
                 "files": sorted(self.ignored_files),
