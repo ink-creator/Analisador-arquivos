@@ -1,5 +1,6 @@
-__pycache__/
+**/__pycache__/
 *.py[cod]
+tests/
 .venv/
 venv/
 .env
@@ -10,4 +11,3 @@ dist/
 build/
 .DS_Store
 Thumbs.db
-

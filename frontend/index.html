@@ -31,6 +31,7 @@
         <button class="nav-item active" data-view="overview" data-i18n="overview">Overview</button>
         <button class="nav-item" data-view="files" data-i18n="files">Files</button>
         <button class="nav-item" data-view="languages" data-i18n="languages">Languages</button>
+        <button class="nav-item" data-view="code" data-i18n="code">Code</button>
         <button class="nav-item" data-view="structure" data-i18n="structure">Structure</button>
         <button class="nav-item" data-view="insights" data-i18n="insights">Insights</button>
       </nav>
@@ -123,6 +124,52 @@
             <article class="panel"><div class="panel-title"><h2 data-i18n="byLines">By lines</h2></div><div id="languages-by-lines" class="bars large-bars"></div></article>
             <article class="panel"><div class="panel-title"><h2 data-i18n="byFiles">By files</h2></div><div id="languages-by-files" class="bars large-bars"></div></article>
           </div>
+        </section>
+
+        <section class="view hidden" data-view-panel="code">
+          <div class="section-heading">
+            <div><p class="eyebrow" data-i18n="pythonIntelligence">Python intelligence</p><h1 data-i18n="codeAnalysis">Code analysis</h1></div>
+          </div>
+
+          <div class="stat-grid">
+            <article class="stat-card"><span data-i18n="pythonFiles">Python files</span><strong id="code-python-files">0</strong></article>
+            <article class="stat-card"><span data-i18n="functions">Functions</span><strong id="code-functions">0</strong></article>
+            <article class="stat-card"><span data-i18n="classes">Classes</span><strong id="code-classes">0</strong></article>
+            <article class="stat-card"><span data-i18n="averageComplexity">Average complexity</span><strong id="code-average-complexity">0</strong></article>
+          </div>
+
+          <div class="grid-two code-grid">
+            <article class="panel">
+              <div class="panel-title">
+                <h2 data-i18n="fileMetrics">Metrics by file</h2>
+                <span id="code-parsed-summary">—</span>
+              </div>
+              <div id="code-files-list" class="code-files-list"></div>
+            </article>
+
+            <div class="insight-column">
+              <article class="panel">
+                <div class="panel-title"><h2 data-i18n="complexityHotspots">Complexity hotspots</h2></div>
+                <div id="complex-functions-list" class="rank-list"></div>
+              </article>
+
+              <article id="dependency-cycles-panel" class="panel cycle-panel">
+                <div class="panel-title">
+                  <h2 data-i18n="circularDependencies">Circular dependencies</h2>
+                  <span id="dependency-cycle-count">0</span>
+                </div>
+                <div id="dependency-cycles-list" class="cycle-list"></div>
+              </article>
+            </div>
+          </div>
+
+          <article class="panel dependencies-panel">
+            <div class="panel-title">
+              <h2 data-i18n="localDependencies">Local dependencies</h2>
+              <span id="dependency-edge-count">0</span>
+            </div>
+            <div id="dependency-list" class="dependency-list"></div>
+          </article>
         </section>
 
         <section class="view hidden" data-view-panel="structure">

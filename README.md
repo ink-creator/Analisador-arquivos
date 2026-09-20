@@ -44,6 +44,10 @@ The interface is built with HTML, CSS and JavaScript and runs as a native deskto
 - Maximum directory depth
 - Empty-directory detection
 - Detection of `TODO`, `FIXME` and `HACK` comments
+- Python function and class counts powered by the standard-library AST
+- Cyclomatic complexity by function and file, including project hotspots
+- Local Python import graph and circular-dependency detection
+- Graceful reporting of Python files with syntax or encoding errors
 - Insights about empty, large and unclassified files
 - Ignored directories such as `.git`, `node_modules`, `.venv`, `dist` and `build`
 - Filesystem warning reporting
@@ -126,6 +130,7 @@ Analisador-arquivos/
 ├── backend/
 │   ├── __init__.py
 │   ├── analyzer.py
+│   ├── code_analysis.py
 │   ├── scanner.py
 │   ├── languages.py
 │   ├── statistics.py
@@ -207,6 +212,10 @@ A interface foi construída com HTML, CSS e JavaScript e é executada em uma jan
 - Profundidade máxima da estrutura
 - Detecção de pastas vazias
 - Detecção de comentários `TODO`, `FIXME` e `HACK`
+- Contagem de funções e classes Python usando a AST da biblioteca padrão
+- Complexidade ciclomática por função e arquivo, com destaques do projeto
+- Grafo de imports locais em Python e detecção de dependências circulares
+- Relatório seguro de arquivos Python com erros de sintaxe ou codificação
 - Insights sobre arquivos vazios, grandes e não classificados
 - Pastas ignoradas por padrão, como `.git`, `node_modules`, `.venv`, `dist` e `build`
 - Avisos de erros de leitura do sistema de arquivos
@@ -289,6 +298,7 @@ Analisador-arquivos/
 ├── backend/
 │   ├── __init__.py
 │   ├── analyzer.py
+│   ├── code_analysis.py
 │   ├── scanner.py
 │   ├── languages.py
 │   ├── statistics.py
